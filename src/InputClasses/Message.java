@@ -1,3 +1,5 @@
+package InputClasses;
+
 public enum Message {
     EMPTY,
     KEYDOWN,

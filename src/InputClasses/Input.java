@@ -1,3 +1,5 @@
+package InputClasses;
+
 import java.util.ArrayList;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -33,13 +35,29 @@ public class Input
         m_messageQueues = new ArrayList<>(0);
     }
 
+    public static void update()
+    {
+        glfwPollEvents();
+    }
+
+    public static int createMessageQueue()
+    {
+        m_messageQueues.add(new ArrayList<>(0));
+        return m_messageQueues.size() -1;
+    }
+
+    public static boolean getMessage(int iQueue, IDPackage message, boolean bRemove)
+    {
+        return false;
+    }
+
+
     private static void keyCallback(long window, int key, int scancode, int action, int mods)
     {
         int iKeyFlag;
 
         switch (mods)
         {
-            case GLFW_MOD_SHIFT:
         }
     }
 
