@@ -1,3 +1,5 @@
+import com.lwjgl.input.*;
+
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -5,7 +7,6 @@ import org.lwjgl.system.*;
 
 import java.nio.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.io.*;
@@ -13,7 +14,6 @@ import java.io.*;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL33.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
@@ -24,13 +24,12 @@ public class main
 
     public static void main(String[] args)
     {
+        int iMessageQueue;
+        MessagePackage message;
+
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
         init();
-
-        /*glfwSetFramebufferSizeCallback(window, (win, width, height) -> {
-            glViewport(0, 0, width, height);
-        });*/
 
         // This line is critical for LWJGL's interoperation with GLFW's
         // OpenGL context, or any context that is managed externally.
@@ -39,6 +38,9 @@ public class main
         // bindings available for use.
         GL.createCapabilities();
 
+        Input.init(window);
+        iMessageQueue = Input.createMessageQueue();
+
         // Set the clear color
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -46,9 +48,23 @@ public class main
         // the window or has pressed the ESCAPE key.
         while ( !glfwWindowShouldClose(window) ) {
 
-            // Poll for window events. The key callback above will only be
-            // invoked during this call.
-            glfwPollEvents();
+            // input
+            Input.update();
+            message = Input.getMessage(iMessageQueue);
+            while (message != null)
+            {
+                switch (message.getMesssage())
+                {
+                    case KEYDOWN:
+                        switch (message.getID())
+                        {
+                            case GLFW_KEY_ESCAPE:
+                                glfwSetWindowShouldClose(window, true);
+                                break;
+                        }
+                }
+                message = Input.getMessage(iMessageQueue);
+            }
 
             glClear(GL_COLOR_BUFFER_BIT); // clear the framebuffer
 
