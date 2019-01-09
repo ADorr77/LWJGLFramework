@@ -48,7 +48,13 @@ public class Input
         m_iXMousePos = 0;
         m_iYMousePos = 0;
 
+        // only put the long ones with :: because -> helps with debuging
         glfwSetKeyCallback(lWindow, Input::keyCallback);
+        glfwSetCharCallback(lWindow, ((window, codepoint) -> {
+            addMessage(new IDPackage(Message.CHARINPUT, codepoint));
+            if (m_bRecordingText)
+                m_strTextBuffer += (char)codepoint;
+        }));
 
         m_messageQueues = new ArrayList<>();
         m_messageQueues.add(new ArrayList<>());
@@ -60,9 +66,21 @@ public class Input
         MessagePackage message = getMessage(0);
         while (message != null)
         {
-            if (message.getMesssage() == Message.KEYDOWN && message.getID() == GLFW_KEY_BACKSPACE)
+            switch (message.getMesssage())
             {
-                m_strTextBuffer = m_strTextBuffer.substring(0, m_strTextBuffer.length() - 2);
+                case KEYDOWN:
+                    switch (message.getID())
+                    {
+                        case GLFW_KEY_BACKSPACE:
+                            m_strTextBuffer = m_strTextBuffer.substring(0, m_strTextBuffer.length() - 1);
+                            break;
+                        case GLFW_KEY_ENTER:
+                            m_strTextBuffer += "\n";
+                            break;
+                        case GLFW_KEY_TAB:
+                            m_strTextBuffer += "\t";
+                            break;
+                    }
             }
             message = getMessage(0);
         }
@@ -83,6 +101,18 @@ public class Input
         return queue.remove(0);
     }
 
+    private static void addMessage(MessagePackage message)
+    {
+        for ( ArrayList<MessagePackage> queue : m_messageQueues)
+        {
+            queue.add(message);
+        }
+    }
+
+    public static void recordText() { m_bRecordingText = true; }
+    public static void stopRecordingText() { m_bRecordingText = false; }
+    public static String getText() { return m_strTextBuffer; }
+    public static void clearText() { m_strTextBuffer = ""; }
 
     private static void keyCallback(long window, int key, int scancode, int action, int mods)
     {
@@ -112,18 +142,13 @@ public class Input
         if(action == GLFW_PRESS)
         {
             m_bKeyPressed[key] = true;
-            for ( ArrayList<MessagePackage> queue : m_messageQueues)
-            {
-                queue.add(new IDPackage(downMessage, key));
-            }
+            addMessage(new IDPackage(downMessage, key));
         }
         else if(action == GLFW_RELEASE)
         {
             m_bKeyPressed[key] = false;
-            for ( ArrayList<MessagePackage> queue : m_messageQueues)
-            {
-                queue.add(new IDPackage(upMessage, key));
-            }
+            addMessage(new IDPackage(upMessage, key));
         }
     }
+
 }
