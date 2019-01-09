@@ -1,6 +1,4 @@
-package InputClasses;
-
-import InputClasses.Message;
+package com.lwjgl.input;
 
 public class MessagePackage
 {

@@ -1,4 +1,4 @@
-package InputClasses;
+package com.lwjgl.input;
 
 public enum Message {
     EMPTY,

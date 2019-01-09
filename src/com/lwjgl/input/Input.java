@@ -1,4 +1,4 @@
-package InputClasses;
+package com.lwjgl.input;
 
 import java.util.ArrayList;
 
@@ -48,9 +48,10 @@ public class Input
         m_iXMousePos = 0;
         m_iYMousePos = 0;
 
+        glfwSetKeyCallback(lWindow, Input::keyCallback);
 
-
-        m_messageQueues = new ArrayList<>(1);
+        m_messageQueues = new ArrayList<>();
+        m_messageQueues.add(new ArrayList<>());
     }
 
     public static void update()
@@ -85,11 +86,44 @@ public class Input
 
     private static void keyCallback(long window, int key, int scancode, int action, int mods)
     {
-        int iKeyFlag;
+        Message downMessage, upMessage;
+        MessagePackage message;
 
         switch (mods)
         {
+            case GLFW_MOD_SHIFT:
+                downMessage = Message.SHIFTKEYDOWN;
+                upMessage = Message.SHIFTKEYUP;
+                break;
+            case GLFW_MOD_CONTROL:
+                downMessage = Message.CTRLCOMMANDDOWN;
+                upMessage = Message.CTRLCOMMANDUP;
+                break;
+            case GLFW_MOD_ALT:
+                downMessage = Message.ALTCOMMANDDOWN;
+                upMessage = Message.ALTCOMMANDUP;
+                break;
+            default:
+                downMessage = Message.KEYDOWN;
+                upMessage = Message.KEYUP;
+                break;
+        }
+
+        if(action == GLFW_PRESS)
+        {
+            m_bKeyPressed[key] = true;
+            for ( ArrayList<MessagePackage> queue : m_messageQueues)
+            {
+                queue.add(new IDPackage(downMessage, key));
+            }
+        }
+        else if(action == GLFW_RELEASE)
+        {
+            m_bKeyPressed[key] = false;
+            for ( ArrayList<MessagePackage> queue : m_messageQueues)
+            {
+                queue.add(new IDPackage(upMessage, key));
+            }
         }
     }
-
 }
