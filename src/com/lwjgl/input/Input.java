@@ -24,7 +24,7 @@ public class Input
 
     private static int m_iPixelWidth, m_iPixelHeight;
     private static int m_iWidth, m_iHeight;
-    private static int m_iXMousePos, m_iYMousePos;
+    private static double m_iXMousePos, m_iYMousePos;
 
 
     public static void init(long lWindow)
@@ -55,6 +55,35 @@ public class Input
             if (m_bRecordingText)
                 m_strTextBuffer += (char)codepoint;
         }));
+        glfwSetFramebufferSizeCallback(lWindow, (window, width1, height1) -> {
+            addMessage(new IntPackage(Message.FRAMEBUFFERRESIZE, width1, height1));
+            m_iPixelWidth = width1;
+            m_iPixelHeight = height1;
+        });
+        glfwSetWindowSizeCallback(lWindow, (window, width1, height1) -> {
+            addMessage(new IntPackage(Message.RESIZE, width1, height1));
+            m_iWidth = width1;
+            m_iHeight = height1;
+        });
+        glfwSetCursorPosCallback(lWindow, (window, xpos, ypos) -> {
+            m_iXMousePos = xpos;
+            m_iYMousePos = ypos;
+        });
+        glfwSetMouseButtonCallback(lWindow, Input::mouseButtonCallback);
+        glfwSetScrollCallback(lWindow, (window, xoffset, yoffset) ->
+                addMessage(new DoublePackage(Message.MOUSESCROLL, xoffset, yoffset))
+        );
+        glfwSetWindowIconifyCallback(lWindow, (window, iconified) -> {
+            Message message;
+            if(iconified)
+                message = Message.MINIMIZE;
+            else
+                message = Message.UNMINIMIZE;
+
+            addMessage(new MessagePackage(message));
+        });
+        glfwSetWindowCloseCallback(lWindow, window -> addMessage(new MessagePackage(Message.DESTROY)));
+
 
         m_messageQueues = new ArrayList<>();
         m_messageQueues.add(new ArrayList<>());
@@ -109,15 +138,31 @@ public class Input
         }
     }
 
+    // these use the GLFW enums for key or mouse button IDs
+    public static boolean keyPressed(int key) { return m_bKeyPressed[key]; }
+    public static boolean mouseButtonPressed(int iButton) { return m_bMouseButtonPressed[iButton]; }
+
+    // Functions that help record text input
     public static void recordText() { m_bRecordingText = true; }
     public static void stopRecordingText() { m_bRecordingText = false; }
     public static String getText() { return m_strTextBuffer; }
     public static void clearText() { m_strTextBuffer = ""; }
 
+    // pixel size is used for glViewport and projection matrices
+    public static int getPixelWidth() { return m_iPixelWidth; }
+    public static int getPixelHeight() { return m_iPixelHeight; }
+
+    // functions to get the window size in screen Coordinates
+    public static int getScreenCoordWidth() { return m_iWidth; }
+    public static int getScreenCoordHeight() { return m_iHeight; }
+
+    // functions to get the mouse position which is always in screen Coordinates
+    public static double getXMousePos() { return m_iXMousePos; }
+    public static double getYMousePos() { return m_iYMousePos; }
+
     private static void keyCallback(long window, int key, int scancode, int action, int mods)
     {
         Message downMessage, upMessage;
-        MessagePackage message;
 
         switch (mods)
         {
@@ -151,4 +196,39 @@ public class Input
         }
     }
 
+    private static void mouseButtonCallback(long window, int button, int action, int mods)
+    {
+        Message downMessage, upMessage;
+
+        switch (mods)
+        {
+            case GLFW_MOUSE_BUTTON_LEFT:
+                downMessage = Message.MOUSELEFTDOWN;
+                upMessage = Message.MOUSELEFTUP;
+                break;
+            case GLFW_MOUSE_BUTTON_MIDDLE:
+                downMessage = Message.MOUSEMIDDLEDOWN;
+                upMessage = Message.MOUSEMIDDLEUP;
+                break;
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                downMessage = Message.MOUSERIGHTDOWN;
+                upMessage = Message.MOUSERIGHTUP;
+                break;
+            default:
+                downMessage = Message.MOUSEOTHERDOWN;
+                upMessage = Message.MOUSEOTHERUP;
+                break;
+        }
+
+        if(action == GLFW_PRESS)
+        {
+            m_bMouseButtonPressed[button] = true;
+            addMessage(new DoublePackage(downMessage, m_iXMousePos, m_iYMousePos));
+        }
+        else if(action == GLFW_RELEASE)
+        {
+            m_bMouseButtonPressed[button] = false;
+            addMessage(new DoublePackage(upMessage, m_iXMousePos, m_iYMousePos));
+        }
+    }
 }
