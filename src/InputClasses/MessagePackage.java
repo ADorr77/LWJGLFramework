@@ -24,6 +24,6 @@ public class MessagePackage
     public int getIntXData() { return -1; }
     public int getIntYData() { return -1; }
 
-    public int getDoubleXData() { return 0; }
-    public int getDoubleYData() { return 0; }
+    public double getDoubleXData() { return 0; }
+    public double getDoubleYData() { return 0; }
 }
